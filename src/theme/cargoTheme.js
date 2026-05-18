@@ -1,0 +1,102 @@
+const BASE = '/themes/cargo/';
+
+export const cargoTheme = {
+  id: 'cargo',
+  displayName: 'Cargo Stacker',
+  design: {
+    width: 941,
+    height: 1672,
+  },
+  backgrounds: {
+    day: `${BASE}backgrounds/day.png`,
+    sunset: `${BASE}backgrounds/sunset.png`,
+    night: `${BASE}backgrounds/night.png`,
+    storm: `${BASE}backgrounds/storm.png`,
+  },
+  concepts: {
+    gameplay: `${BASE}concepts/gameplay.png`,
+    gameOver: `${BASE}concepts/game-over.png`,
+  },
+  ui: {
+    logo: `${BASE}ui/logo.png`,
+    timingBar: `${BASE}ui/timing-bar.png`,
+    pointerDown: `${BASE}ui/pointer-down.png`,
+    pointerUp: `${BASE}ui/pointer-up.png`,
+    scoreBadge: `${BASE}ui/score-badge.png`,
+    panelGameOver: `${BASE}ui/panel-game-over.png`,
+    panelDark: `${BASE}ui/panel-dark.png`,
+    buttonGreen: `${BASE}ui/button-green.png`,
+    buttonBlue: `${BASE}ui/button-blue.png`,
+    buttonRed: `${BASE}ui/button-red.png`,
+    buttonPlayAgain: `${BASE}ui/button-play-again.png`,
+    settings: `${BASE}ui/settings.png`,
+    pause: `${BASE}ui/pause.png`,
+    soundOn: `${BASE}ui/sound-on.png`,
+    coin: `${BASE}ui/coin.png`,
+  },
+  audio: {
+    button: `${BASE}audio/button.wav`,
+    tap: `${BASE}audio/tap.wav`,
+    thud: `${BASE}audio/thud.wav`,
+    slice: `${BASE}audio/slice.wav`,
+    perfect: `${BASE}audio/perfect.wav`,
+    splash: `${BASE}audio/splash.wav`,
+    gameOver: `${BASE}audio/game-over.wav`,
+  },
+  containers: [
+    {
+      id: 'cs-01-orange',
+      label: 'Northwind Logistics',
+      sprite: `${BASE}containers/cs-01-orange/side.png`,
+      color: '#f57b1b',
+    },
+    {
+      id: 'cs-02-teal',
+      label: 'Ironharbor Shipping',
+      sprite: `${BASE}containers/cs-02-teal/side.png`,
+      color: '#18b0aa',
+    },
+    {
+      id: 'cs-03-red',
+      label: 'Redstone Freight',
+      sprite: `${BASE}containers/cs-03-red/side.png`,
+      color: '#e63e2a',
+    },
+    {
+      id: 'cs-04-blue',
+      label: 'Skyline Carriers',
+      sprite: `${BASE}containers/cs-04-blue/side.png`,
+      color: '#257edb',
+    },
+    {
+      id: 'cs-05-purple',
+      label: 'Solace Global',
+      sprite: `${BASE}containers/cs-05-purple/side.png`,
+      color: '#8c45c5',
+    },
+    {
+      id: 'cs-06-yellow',
+      label: 'Titanforge Industries',
+      sprite: `${BASE}containers/cs-06-yellow/side.png`,
+      color: '#f7bf22',
+    },
+    {
+      id: 'cs-07-green',
+      label: 'Veridian Transport',
+      sprite: `${BASE}containers/cs-07-green/side.png`,
+      color: '#54bd39',
+    },
+    {
+      id: 'cs-08-steelblue',
+      label: 'Waypoint Express',
+      sprite: `${BASE}containers/cs-08-steelblue/side.png`,
+      color: '#4b7993',
+    },
+  ],
+  offcuts: [
+    `${BASE}containers/offcuts/offcut-1.png`,
+    `${BASE}containers/offcuts/offcut-2.png`,
+    `${BASE}containers/offcuts/offcut-3.png`,
+    `${BASE}containers/offcuts/offcut-4.png`,
+  ],
+};
