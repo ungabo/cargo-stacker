@@ -1,13 +1,29 @@
 const BASE = '/themes/cargo/';
 
+function container(id, label, color) {
+  return {
+    id,
+    label,
+    sprite: `${BASE}containers/${id}/side.png`,
+    color,
+    textures: {
+      side: `${BASE}containers/${id}/texture-side.png`,
+      top: `${BASE}containers/${id}/texture-top.png`,
+      end: `${BASE}containers/${id}/texture-end.png`,
+    },
+  };
+}
+
 export const cargoTheme = {
   id: 'cargo',
   displayName: 'Cargo Stacker',
+  storageKey: 'cargo-stacker.best-score',
   design: {
     width: 941,
     height: 1672,
   },
   backgrounds: {
+    scroll: `${BASE}backgrounds/scroll.png`,
     day: `${BASE}backgrounds/day.png`,
     sunset: `${BASE}backgrounds/sunset.png`,
     night: `${BASE}backgrounds/night.png`,
@@ -43,55 +59,34 @@ export const cargoTheme = {
     splash: `${BASE}audio/splash.wav`,
     gameOver: `${BASE}audio/game-over.wav`,
   },
+  textures: {
+    environment: {
+      deck: `${BASE}environment/deck.png`,
+      water: `${BASE}environment/water.png`,
+    },
+  },
+  scene: {
+    deckColor: '#ffffff',
+    hullColor: '#173c62',
+    groundColor: '#6bd6ff',
+    groundOpacity: 0.34,
+    edgeOpacity: 0.28,
+    craneColor: '#1b3659',
+    pieceMetalness: 0.12,
+    pieceRoughness: 0.72,
+  },
+  gameplay: {
+    axes: ['x', 'z'],
+  },
   containers: [
-    {
-      id: 'cs-01-orange',
-      label: 'Northwind Logistics',
-      sprite: `${BASE}containers/cs-01-orange/side.png`,
-      color: '#f57b1b',
-    },
-    {
-      id: 'cs-02-teal',
-      label: 'Ironharbor Shipping',
-      sprite: `${BASE}containers/cs-02-teal/side.png`,
-      color: '#18b0aa',
-    },
-    {
-      id: 'cs-03-red',
-      label: 'Redstone Freight',
-      sprite: `${BASE}containers/cs-03-red/side.png`,
-      color: '#e63e2a',
-    },
-    {
-      id: 'cs-04-blue',
-      label: 'Skyline Carriers',
-      sprite: `${BASE}containers/cs-04-blue/side.png`,
-      color: '#257edb',
-    },
-    {
-      id: 'cs-05-purple',
-      label: 'Solace Global',
-      sprite: `${BASE}containers/cs-05-purple/side.png`,
-      color: '#8c45c5',
-    },
-    {
-      id: 'cs-06-yellow',
-      label: 'Titanforge Industries',
-      sprite: `${BASE}containers/cs-06-yellow/side.png`,
-      color: '#f7bf22',
-    },
-    {
-      id: 'cs-07-green',
-      label: 'Veridian Transport',
-      sprite: `${BASE}containers/cs-07-green/side.png`,
-      color: '#54bd39',
-    },
-    {
-      id: 'cs-08-steelblue',
-      label: 'Waypoint Express',
-      sprite: `${BASE}containers/cs-08-steelblue/side.png`,
-      color: '#4b7993',
-    },
+    container('cs-01-orange', 'Northwind Logistics', '#f57b1b'),
+    container('cs-02-teal', 'Ironharbor Shipping', '#18b0aa'),
+    container('cs-03-red', 'Redstone Freight', '#e63e2a'),
+    container('cs-04-blue', 'Skyline Carriers', '#257edb'),
+    container('cs-05-purple', 'Solace Global', '#8c45c5'),
+    container('cs-06-yellow', 'Titanforge Industries', '#f7bf22'),
+    container('cs-07-green', 'Veridian Transport', '#54bd39'),
+    container('cs-08-steelblue', 'Waypoint Express', '#4b7993'),
   ],
   offcuts: [
     `${BASE}containers/offcuts/offcut-1.png`,
