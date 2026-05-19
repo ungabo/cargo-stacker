@@ -1,18 +1,66 @@
 {
   "name": "cargo-stacker",
   "version": "0.1.0",
+  "description": "A cargo stacking arcade game for web and native shells.",
+  "author": "ungabo",
   "private": true,
   "type": "module",
+  "main": "electron/main.cjs",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "vite build",
-    "preview": "vite preview --host 127.0.0.1"
+    "preview": "vite preview --host 127.0.0.1",
+    "native:sync": "npm run build && cap sync",
+    "android:sync": "npm run build && cap sync android",
+    "android:open": "cap open android",
+    "android:build": "npm run build && cap sync android && cd android && gradlew.bat assembleDebug",
+    "ios:sync": "npm run build && cap sync ios",
+    "ios:open": "cap open ios",
+    "windows:dev": "npm run build && electron .",
+    "windows:build": "npm run build && electron-builder --win --x64"
   },
-  "dependencies": {
+  "dependencies": {},
+  "devDependencies": {
+    "@capacitor/app": "^8.1.0",
+    "@capacitor/core": "^8.3.4",
+    "@capacitor/android": "^8.3.4",
+    "@capacitor/cli": "^8.3.4",
+    "@capacitor/ios": "^8.3.4",
     "@vitejs/plugin-react": "^5.0.0",
+    "electron": "^42.1.0",
+    "electron-builder": "^26.8.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "three": "^0.181.2",
     "vite": "^7.1.0"
+  },
+  "build": {
+    "appId": "com.ungabo.cargostacker",
+    "productName": "Cargo Stacker",
+    "asar": true,
+    "directories": {
+      "buildResources": "build",
+      "output": "release/windows"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "extraMetadata": {
+      "dependencies": {}
+    },
+    "win": {
+      "signAndEditExecutable": false,
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico"
+    }
   }
 }

@@ -7,27 +7,23 @@ const INITIAL_STATE = {
   score: 0,
   best: 0,
   perfectStreak: 0,
+  cameraY: 0,
 };
 
 function formatNumber(value) {
   return value.toLocaleString('en-US');
 }
 
-function ScoreHud({ score, theme, soundEnabled, onPause, onSoundToggle }) {
+function ScoreHud({ score, best, theme, onPause, onPerfectStep }) {
   return (
     <>
       <button className="settings-button" data-ui-control type="button" aria-label="Pause" onClick={onPause}>
         <img src={theme.ui.settings} alt="" />
       </button>
-      <button
-        className={`coin-pill ${soundEnabled ? '' : 'is-muted'}`}
-        data-ui-control
-        type="button"
-        aria-label={soundEnabled ? 'Mute sound' : 'Enable sound'}
-        onClick={onSoundToggle}
-      >
-        <span>1250</span>
-      </button>
+      <section className="record-pill" aria-label="Record">
+        <span>Record</span>
+        <strong>{formatNumber(best)}</strong>
+      </section>
       <img className="title-logo" src={theme.ui.logo} alt="Cargo Stacker" />
       <section className="score-readout" aria-label="Score">
         <div className="score-label">
@@ -35,28 +31,16 @@ function ScoreHud({ score, theme, soundEnabled, onPause, onSoundToggle }) {
         </div>
         <strong>{formatNumber(score)}</strong>
       </section>
+      <button
+        className="test-stack-button"
+        data-ui-control
+        type="button"
+        aria-label="Place one perfectly aligned container"
+        onClick={onPerfectStep}
+      >
+        Perfect +1
+      </button>
     </>
-  );
-}
-
-function TimingBar({ theme }) {
-  return (
-    <div className="timing-bar-wrap" aria-hidden="true">
-      <img className="timing-pointer timing-pointer--down" src={theme.ui.pointerDown} alt="" />
-      <img className="timing-bar-art" src={theme.ui.timingBar} alt="" />
-      <img className="timing-pointer timing-pointer--up" src={theme.ui.pointerUp} alt="" />
-    </div>
-  );
-}
-
-function GuideLine() {
-  return (
-    <div className="guide-line" aria-hidden="true">
-      <span className="guide-arrow guide-arrow--left" />
-      <span className="guide-dashes guide-dashes--left" />
-      <span className="guide-dashes guide-dashes--right" />
-      <span className="guide-arrow guide-arrow--right" />
-    </div>
   );
 }
 
@@ -72,23 +56,23 @@ function PausedOverlay({ onResume, onRestart }) {
   );
 }
 
-function GameOverOverlay({ theme, score, best, onRestart }) {
+function GameOverOverlay({ score, best, onRestart }) {
   return (
     <section className="game-over-overlay" aria-label="Game over">
       <div className="game-over-card">
-        <img className="game-over-panel-art" src={theme.ui.panelGameOver} alt="" />
+        <h2>Game Over</h2>
         <div className="game-over-stats">
           <div>
             <span>Score</span>
             <strong>{formatNumber(score)}</strong>
           </div>
           <div>
-            <span>Best</span>
+            <span>Record</span>
             <strong>{formatNumber(best)}</strong>
           </div>
         </div>
-        <button className="play-again-button" data-ui-control type="button" onClick={onRestart} aria-label="Play again">
-          <img src={theme.ui.buttonPlayAgain} alt="" />
+        <button className="play-again-button" data-ui-control type="button" onClick={onRestart}>
+          Play Again
         </button>
       </div>
     </section>
@@ -109,18 +93,12 @@ export function StackingGame({ theme }) {
   const canvasRef = useRef(null);
   const engineRef = useRef(null);
   const effectTimerRef = useRef(null);
-  const soundEnabledRef = useRef(true);
   const [gameState, setGameState] = useState(INITIAL_STATE);
-  const [soundEnabled, setSoundEnabled] = useState(true);
   const [effect, setEffect] = useState(null);
   const audioBus = useMemo(() => createAudioBus(theme.audio), [theme.audio]);
 
-  useEffect(() => {
-    soundEnabledRef.current = soundEnabled;
-  }, [soundEnabled]);
-
   const playSound = useCallback((name) => {
-    audioBus.play(name, soundEnabledRef.current);
+    audioBus.play(name, true);
   }, [audioBus]);
 
   const handleEngineEvent = useCallback((event) => {
@@ -134,9 +112,11 @@ export function StackingGame({ theme }) {
       effectTimerRef.current = null;
     }, 420);
 
-    if (event.type === 'perfect' && navigator.vibrate) {
+    const canVibrate = navigator.vibrate && (navigator.userActivation?.hasBeenActive ?? true);
+
+    if (event.type === 'perfect' && canVibrate) {
       navigator.vibrate([16, 24, 16]);
-    } else if ((event.type === 'slice' || event.type === 'gameOver') && navigator.vibrate) {
+    } else if ((event.type === 'slice' || event.type === 'gameOver') && canVibrate) {
       navigator.vibrate(28);
     }
   }, []);
@@ -164,14 +144,18 @@ export function StackingGame({ theme }) {
     engineRef.current = engine;
     engine.startGame();
 
-    const exposeQaEngine = new URLSearchParams(window.location.search).has('qa');
+    const exposeQaEngine = import.meta.env.DEV || new URLSearchParams(window.location.search).has('qa');
     if (exposeQaEngine) {
       window.__cargoStackerEngine = engine;
+      window.cargoStackerEngine = engine;
     }
 
     return () => {
       if (exposeQaEngine && window.__cargoStackerEngine === engine) {
         delete window.__cargoStackerEngine;
+      }
+      if (exposeQaEngine && window.cargoStackerEngine === engine) {
+        delete window.cargoStackerEngine;
       }
       engine.destroy();
       engineRef.current = null;
@@ -213,16 +197,12 @@ export function StackingGame({ theme }) {
     engineRef.current?.startGame();
   }, [playSound]);
 
-  const handleSoundToggle = useCallback(() => {
-    const next = !soundEnabledRef.current;
-    setSoundEnabled(next);
-    soundEnabledRef.current = next;
-    if (next) {
-      audioBus.play('button', true);
-    }
-  }, [audioBus]);
+  const handlePerfectStep = useCallback(() => {
+    engineRef.current?.placeActivePerfectly();
+  }, []);
 
-  const progress = Math.min(100, gameState.score * 1.8);
+  const cameraClimb = Math.max(0, gameState.cameraY || 0);
+  const progress = Math.min(76, Math.pow(cameraClimb, 1.18) * 2.8);
   const backgroundY = `${100 - progress}%`;
 
   return (
@@ -235,15 +215,15 @@ export function StackingGame({ theme }) {
       onPointerDown={handlePointerDown}
     >
       <canvas ref={canvasRef} className="game-canvas" aria-label={`${theme.displayName} playfield`} />
-      <ScoreHud
-        score={gameState.score}
-        theme={theme}
-        soundEnabled={soundEnabled}
-        onPause={handlePause}
-        onSoundToggle={handleSoundToggle}
-      />
-      <TimingBar theme={theme} />
-      <GuideLine />
+      {gameState.status !== 'gameOver' && (
+        <ScoreHud
+          score={gameState.score}
+          best={gameState.best}
+          theme={theme}
+          onPause={handlePause}
+          onPerfectStep={handlePerfectStep}
+        />
+      )}
       {effect === 'perfect' && gameState.perfectStreak >= 2 && gameState.status === 'playing' && (
         <div className="streak-callout" aria-live="polite">
           Perfect x{gameState.perfectStreak}
@@ -253,7 +233,7 @@ export function StackingGame({ theme }) {
         <PausedOverlay onResume={handlePause} onRestart={handleRestart} />
       )}
       {gameState.status === 'gameOver' && (
-        <GameOverOverlay theme={theme} score={gameState.score} best={gameState.best} onRestart={handleRestart} />
+        <GameOverOverlay score={gameState.score} best={gameState.best} onRestart={handleRestart} />
       )}
       <div className="hit-flash" aria-hidden="true" />
       <ReferenceOverlay theme={theme} />

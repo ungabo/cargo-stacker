@@ -3,3 +3,11 @@ dist/
 qa/
 .DS_Store
 *.log
+release/
+android/.gradle/
+android/local.properties
+android/**/build/
+ios/App/Pods/
+ios/App/App.xcworkspace/xcuserdata/
+ios/App/App.xcodeproj/xcuserdata/
+ios/DerivedData/

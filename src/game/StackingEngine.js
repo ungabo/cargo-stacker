@@ -4,6 +4,9 @@ const LAYER_HEIGHT = 0.54;
 const BASE_SIZE = { x: 2.86, y: LAYER_HEIGHT, z: 1.08 };
 const PERFECT_TOLERANCE = 0.085;
 const MISS_TOLERANCE = 0.08;
+const DECK_FOLLOW_OFFSET = 2.55;
+const EARLY_CAMERA_FOLLOW = 0.76;
+const ACTIVE_LAYER_CAMERA_OFFSET = 1.66;
 
 function readBestScore(storageKey) {
   const value = Number.parseInt(window.localStorage.getItem(storageKey) || '0', 10);
@@ -46,6 +49,12 @@ function resizeRendererToDisplaySize(renderer, camera, canvas) {
   }
 }
 
+function getCameraTargetY(layerY) {
+  const deckFollow = Math.max(0, layerY - DECK_FOLLOW_OFFSET) * EARLY_CAMERA_FOLLOW;
+  const activeLayerCeiling = Math.max(0, layerY - ACTIVE_LAYER_CAMERA_OFFSET);
+  return Math.max(deckFollow, activeLayerCeiling);
+}
+
 export class StackingEngine {
   constructor({ canvas, theme, onStateChange, onEvent, onPlaySound }) {
     this.canvas = canvas;
@@ -70,6 +79,8 @@ export class StackingEngine {
     this.offcuts = [];
     this.active = null;
     this.craneCable = null;
+    this.craneSpreader = null;
+    this.craneSlings = null;
     this.storageKey = theme.storageKey || `${theme.id || 'stacker'}.best-score`;
     this.best = readBestScore(this.storageKey);
     this.score = 0;
@@ -121,29 +132,32 @@ export class StackingEngine {
     fill.position.set(5, 3, 6);
     this.scene.add(fill);
 
-    const deckTexture = this.loadTexture(this.theme.textures.environment.deck, { repeatX: 2.55, repeatY: 1.42 });
-    const deckMaterial = new THREE.MeshStandardMaterial({
-      map: deckTexture,
-      color: new THREE.Color(this.theme.scene?.deckColor || '#ffffff'),
-      roughness: 0.86,
-      metalness: 0.05,
-    });
-    deckMaterial.side = THREE.DoubleSide;
-    const deck = new THREE.Mesh(new THREE.PlaneGeometry(5.45, 3.18), deckMaterial);
-    deck.rotation.x = -Math.PI / 2;
-    deck.position.set(0, -0.012, 0.16);
-    deck.receiveShadow = true;
-    this.scene.add(deck);
-
     this.craneCable = new THREE.Line(
       new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 8, 0), new THREE.Vector3(0, 1, 0)]),
       new THREE.LineBasicMaterial({
         color: new THREE.Color(this.theme.scene?.craneColor || '#1b3659'),
         transparent: true,
-        opacity: 0.62,
+        opacity: 0.76,
       }),
     );
     this.scene.add(this.craneCable);
+
+    const rigMaterial = new THREE.MeshBasicMaterial({
+      color: new THREE.Color(this.theme.scene?.craneColor || '#1b3659'),
+    });
+    this.craneSpreader = new THREE.Group();
+    this.craneSpreader.add(new THREE.Mesh(new THREE.BoxGeometry(BASE_SIZE.x * 0.82, 0.06, 0.08), rigMaterial));
+    this.scene.add(this.craneSpreader);
+
+    this.craneSlings = new THREE.LineSegments(
+      new THREE.BufferGeometry(),
+      new THREE.LineBasicMaterial({
+        color: new THREE.Color(this.theme.scene?.craneColor || '#1b3659'),
+        transparent: true,
+        opacity: 0.82,
+      }),
+    );
+    this.scene.add(this.craneSlings);
   }
 
   loadTexture(path, options = {}) {
@@ -301,6 +315,16 @@ export class StackingEngine {
     this.placeActiveLayer();
   }
 
+  placeActivePerfectly() {
+    if (this.status !== 'playing' || !this.active) {
+      return;
+    }
+
+    const previous = this.stack[this.stack.length - 1];
+    this.active.group.position[this.active.axis] = previous.group.position[this.active.axis];
+    this.placeActiveLayer();
+  }
+
   placeActiveLayer() {
     if (!this.active) {
       return;
@@ -345,7 +369,7 @@ export class StackingEngine {
     window.localStorage.setItem(this.storageKey, String(this.best));
     this.movementSpeed = Math.min(5.4, 2.05 + this.score * 0.075);
     this.movementBound = Math.min(4.08, 3.05 + this.score * 0.022);
-    this.cameraTargetY = Math.max(0, placedPosition.y - 1.06);
+    this.cameraTargetY = getCameraTargetY(placedPosition.y);
 
     if (isPerfect) {
       this.onPlaySound?.('perfect');
@@ -468,18 +492,30 @@ export class StackingEngine {
   }
 
   updateCrane() {
-    if (!this.craneCable) {
+    if (!this.craneCable || !this.craneSpreader || !this.craneSlings) {
       return;
     }
 
-    const target = this.active?.group.position || this.stack[this.stack.length - 1]?.group.position;
+    const targetBlock = this.active || this.stack[this.stack.length - 1];
+    const target = targetBlock?.group.position;
     if (!target) {
       return;
     }
 
-    const top = new THREE.Vector3(target.x, target.y + 3.7, target.z);
-    const bottom = new THREE.Vector3(target.x, target.y + 0.52, target.z);
-    this.craneCable.geometry.setFromPoints([top, bottom]);
+    const containerTopY = target.y + (targetBlock.size.y / 2);
+    const spreaderY = containerTopY + 0.14;
+    const cableTop = new THREE.Vector3(target.x, spreaderY + 12, target.z);
+    const cableBottom = new THREE.Vector3(target.x, spreaderY, target.z);
+    this.craneCable.geometry.setFromPoints([cableTop, cableBottom]);
+
+    this.craneSpreader.position.set(target.x, spreaderY, target.z);
+    const slingInset = Math.min(targetBlock.size.x * 0.34, BASE_SIZE.x * 0.34);
+    this.craneSlings.geometry.setFromPoints([
+      new THREE.Vector3(target.x - slingInset, spreaderY, target.z),
+      new THREE.Vector3(target.x - slingInset * 0.82, containerTopY + 0.01, target.z),
+      new THREE.Vector3(target.x + slingInset, spreaderY, target.z),
+      new THREE.Vector3(target.x + slingInset * 0.82, containerTopY + 0.01, target.z),
+    ]);
   }
 
   animate() {
@@ -503,6 +539,7 @@ export class StackingEngine {
       score: this.score,
       best: this.best,
       perfectStreak: this.perfectStreak,
+      cameraY: this.cameraTargetY,
     });
   }
 
