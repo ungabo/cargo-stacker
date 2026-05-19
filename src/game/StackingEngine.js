@@ -301,6 +301,12 @@ export class StackingEngine {
     this.emitState();
   }
 
+  resetBestScore() {
+    this.best = 0;
+    window.localStorage.setItem(this.storageKey, '0');
+    this.emitState();
+  }
+
   handleTap() {
     if (this.status === 'menu' || this.status === 'gameOver') {
       this.startGame();

@@ -1,5 +1,9 @@
 export function createAudioBus(audioManifest) {
   const clips = new Map();
+  const volumes = {
+    gameOver: 0.72,
+    splash: 0.52,
+  };
 
   Object.entries(audioManifest).forEach(([name, src]) => {
     const audio = new Audio(src);
@@ -24,7 +28,7 @@ export function createAudioBus(audioManifest) {
       }
 
       const audio = source.cloneNode();
-      audio.volume = name === 'gameOver' ? 0.72 : 0.86;
+      audio.volume = volumes[name] ?? 0.86;
       audio.play().catch(() => {});
     },
   };
